@@ -11,4 +11,6 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     public DbSet<Vocab> Vocab => Set<Vocab>();
     public DbSet<Language> Languages => Set<Language>();
+    public DbSet<VocabInstance> Instances => Set<VocabInstance>();
+    public DbSet<Comment> Comments => Set<Comment>();
 }
