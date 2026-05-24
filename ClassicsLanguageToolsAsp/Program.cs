@@ -21,9 +21,9 @@ public class Program
         builder.Services.AddAuthorization();
         // Add services to the container.
         // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        //     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
+        //      .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers().AddNewtonsoftJson();
         
         // Register your SQLite database connection service
         var connectionString = builder.Configuration
@@ -50,7 +50,7 @@ public class Program
         }
         
         app.UseHttpsRedirection();
-
+        app.UseAuthentication();
         app.UseAuthorization();
         
         app.MapControllers();

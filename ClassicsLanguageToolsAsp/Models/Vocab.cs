@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace ClassicsLanguageToolsAsp.Models;
 
@@ -9,6 +10,6 @@ public class Vocab
     [Required, StringLength(255)] public string Definition { get; set; } = "";
     [Required] public Language Language { get; set; } = new Language();
     [Required, StringLength(255)] public string PartOfSpeech { get; set; } = String.Empty;
-    [Required] public User Creator { get; set; } = new User();
+    public IdentityUser? Creator { get; set; }
     
 }
