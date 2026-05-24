@@ -52,7 +52,7 @@ public class VocabController : ControllerBase
             return Unauthorized();
         }
         List<Vocab> vocab = await _ctx.Vocab
-            .Where(v => v.Language.Id == languageId && 
+            .Where(v => v.LanguageId == languageId && 
                         v.Creator.Id == currentId)
             .ToListAsync();
         return Ok(vocab);
@@ -66,13 +66,16 @@ public class VocabController : ControllerBase
         {
             return NotFound();
         }
-        Vocab? vocab = await _ctx.Vocab.FindAsync(id);
+        Vocab? vocab = await _ctx.Vocab
+            .Include(v => v.Language)
+            .Include(v => v.Creator)
+            .SingleOrDefaultAsync(v => v.Id == id);
         if (vocab == null)
         {
             return NotFound();
         } 
         
-        if (vocab.Creator.Id != currentId)
+        if (vocab.Creator?.Id != currentId)
         {
             return Unauthorized();
         }
@@ -82,6 +85,7 @@ public class VocabController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddVocab([FromBody] Vocab newVocab)
     {
+        newVocab.PrintVocab();
         IdentityUser? currentUser = await _userManager.GetUserAsync(User);
         //ClassUser? currentUser = (ClassUser?)currentIdentUser;
         if (currentUser == null)
@@ -102,7 +106,7 @@ public class VocabController : ControllerBase
         {
             return BadRequest();
         }
-        Vocab vocab = await _ctx.Vocab.FindAsync(id);
+        Vocab? vocab = await _ctx.Vocab.FindAsync(id);
         if (vocab == null)
         {
             return NotFound();
@@ -120,22 +124,24 @@ public class VocabController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVocab(int id)
     {
-        string? currentUser = User.Identity.Name;
-        if (currentUser == null)
+        string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (currentUserId == null)
         {
             return NotFound();
         }
         
-        Vocab vocab = await _ctx.Vocab.FindAsync(id);
+        Vocab? vocab = await _ctx.Vocab
+            .Include(v => v.Creator)
+            .SingleOrDefaultAsync(v => v.Id == id);
         if (vocab == null)
         {
             return NotFound();
         }
 
-        // if (vocab.Creator.Id != currentUser.Id)
-        // {
-        //     return Unauthorized();
-        // }
+        if (vocab.Creator?.Id != currentUserId)
+        {
+            return Unauthorized();
+        }
         
         _ctx.Vocab.Remove(vocab);
         await _ctx.SaveChangesAsync();
