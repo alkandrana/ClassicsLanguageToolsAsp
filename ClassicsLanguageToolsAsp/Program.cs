@@ -15,7 +15,15 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowSpecificOrigins", policy =>
+            {
+                policy.WithOrigins("http://localhost:5173").AllowAnyMethod().AllowAnyHeader();
+            });
+        });
+
+    builder.Services.AddIdentityApiEndpoints<IdentityUser>()
             .AddEntityFrameworkStores<AppDbContext>();
 
         builder.Services.AddAuthorization();
@@ -50,6 +58,7 @@ public class Program
         }
         
         app.UseHttpsRedirection();
+        app.UseCors("AllowSpecificOrigins");
         app.UseAuthentication();
         app.UseAuthorization();
         
