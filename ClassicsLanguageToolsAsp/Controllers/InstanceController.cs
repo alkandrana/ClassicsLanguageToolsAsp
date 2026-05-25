@@ -42,6 +42,22 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 .ToListAsync();
             return Ok(instances);
         }
+        
+        [HttpGet]
+        [Route("/instances/project/{id:int}")]
+        public async Task<IActionResult> GetInstancesByProject(int id)
+        {
+            string? currentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentId == null)
+            {
+                return Unauthorized();
+            }
+
+            List<VocabInstance> vocab = await _ctx.Instances
+                .Where(i => i.Vocab.Creator.Id == currentId && i.ProjectId == id)
+                .Include(i => i.Vocab).ToListAsync();
+            return Ok(vocab);
+        }
 
         // GET: instances/5
         [HttpGet("{id}")]

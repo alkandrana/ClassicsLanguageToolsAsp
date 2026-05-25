@@ -45,14 +45,16 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProject(int id)
         {
-            var project = await _ctx.Projects.Include(p => p.Creator)
+            Project? project = await _ctx.Projects
+                .Include(p => p.VocabList).ThenInclude(i => i.Vocab)
                 .SingleOrDefaultAsync(p => p.Id == id);
             if (project == null)
             {
                 return NotFound();
             }
+            string projectUserId = await _ctx.Projects.Where(p => p.Id == id).Select(p => p.Creator.Id).SingleOrDefaultAsync();
             string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || currentUserId != project.Creator?.Id)
+            if (currentUserId == null || currentUserId != projectUserId)
             {
                 return Unauthorized();
             }

@@ -6,6 +6,7 @@ using Microsoft.Identity.Web.Resource;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using ClassicsLanguageToolsAsp.Data;
+using ClassicsLanguageToolsAsp.Models;
 
 namespace ClassicsLanguageToolsAsp;
 
@@ -31,7 +32,11 @@ public class Program
         // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         //      .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
 
-        builder.Services.AddControllers().AddNewtonsoftJson();
+        builder.Services.AddControllers().AddNewtonsoftJson(options =>
+        {
+            options.SerializerSettings.ReferenceLoopHandling = 
+                Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+        });
         
         // Register your SQLite database connection service
         var connectionString = builder.Configuration
@@ -65,7 +70,12 @@ public class Program
         app.MapControllers();
         
         app.MapIdentityApi<IdentityUser>();
-
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider
+                .GetRequiredService<AppDbContext>();
+            SeedData.Seed(dbContext);
+        }
         app.Run();
     }
 }

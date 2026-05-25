@@ -11,4 +11,6 @@ public class Project
     public DateTime StartDate { get; set; }
     public DateOnly? Deadline { get; set; }
     public IdentityUser? Creator { get; set; }
+    
+    public ICollection<VocabInstance> VocabList { get; set; } = new List<VocabInstance>();
 }

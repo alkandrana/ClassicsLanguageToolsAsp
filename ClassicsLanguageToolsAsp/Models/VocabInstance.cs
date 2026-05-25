@@ -11,4 +11,6 @@ public class VocabInstance
     [Required, StringLength(255)] public string Citation { get; set; } = "";
     [Required] public int VocabId { get; set; }
     public Vocab? Vocab { get; set; }
+    [Required] public int? ProjectId { get; set; }
+    public Project? Project { get; set; }
 }
