@@ -13,4 +13,5 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Language> Languages => Set<Language>();
     public DbSet<VocabInstance> Instances => Set<VocabInstance>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Project> Projects => Set<Project>();
 }
