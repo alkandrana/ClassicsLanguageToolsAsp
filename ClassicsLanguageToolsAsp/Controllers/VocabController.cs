@@ -18,9 +18,9 @@ public class VocabController : ControllerBase
 
     private readonly ILogger<VocabController> _logger;
     private AppDbContext _ctx;
-    private UserManager<IdentityUser> _userManager;
+    private UserManager<ClassUser> _userManager;
     
-    public VocabController(ILogger<VocabController> logger, AppDbContext ctx, UserManager<IdentityUser> userMng)
+    public VocabController(ILogger<VocabController> logger, AppDbContext ctx, UserManager<ClassUser> userMng)
     {
         _logger = logger;
         _ctx = ctx;
@@ -86,13 +86,22 @@ public class VocabController : ControllerBase
     public async Task<IActionResult> AddVocab([FromBody] Vocab newVocab)
     {
         newVocab.PrintVocab();
-        IdentityUser? currentUser = await _userManager.GetUserAsync(User);
+        ClassUser? currentUser = await _userManager.GetUserAsync(User);
         //ClassUser? currentUser = (ClassUser?)currentIdentUser;
         if (currentUser == null)
         {
             return NotFound();
         }
         newVocab.Creator = currentUser;
+        List<Vocab> duplicates = await _ctx.Vocab.Where(v => v.Lemma == newVocab.Lemma).ToListAsync();
+        if (duplicates.Count > 0)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Duplicate entry",
+                Detail = "That vocab entry already exists.",
+            });
+        }
         _ctx.Vocab.Add(newVocab);
         await _ctx.SaveChangesAsync();
         return CreatedAtAction(nameof(GetOneVocab), 

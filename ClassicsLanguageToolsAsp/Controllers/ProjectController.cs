@@ -82,7 +82,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
         
         // PATCH: projects/{id}
         [HttpPatch("{id:int}")]
-        public async Task<IActionResult> EditVocab([FromRoute] int id, [FromBody] JsonPatchDocument<Project> projectData)
+        public async Task<IActionResult> EditProject([FromRoute] int id, [FromBody] JsonPatchDocument<Project> projectData)
         {
             if (projectData == null)
             {
