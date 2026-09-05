@@ -1,3 +1,4 @@
+using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,9 +8,9 @@ namespace ClassicsLanguageToolsAsp.Controllers;
 [Route("[controller]")]
 public class HomeController : Controller
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ClassUser> _userManager;
 
-    public HomeController(UserManager<IdentityUser> userManager)
+    public HomeController(UserManager<ClassUser> userManager)
     {
         _userManager = userManager;
     }
@@ -49,5 +50,53 @@ public class HomeController : Controller
             return Unauthorized();
         }
         return Ok(currentUser);
+    }
+
+    [Authorize]
+    [HttpPut]
+    [Route("/profile")]
+    public async Task<IActionResult> EditCurrentUser([FromBody] ClassUser user)
+    {
+        if (user == null)
+        {
+            return BadRequest();
+        }
+
+        ClassUser? userToUpdate = await _userManager.GetUserAsync(User);
+        if (userToUpdate == null)
+        {
+            return NotFound();
+        }
+
+        if (user.Email != userToUpdate.Email)
+        {
+            return Unauthorized();
+        }
+
+        if (user.Name != null)
+        {
+            userToUpdate.Name = user.Name;
+        }
+
+        if (user.UserName != null)
+        {
+            userToUpdate.UserName = user.UserName;
+        }
+
+        if (user.Email != null)
+        {
+            userToUpdate.Email = user.Email;
+        }
+
+        if (user.PhoneNumber != null)
+        {
+            userToUpdate.PhoneNumber = user.PhoneNumber;
+        }
+        IdentityResult result = await _userManager.UpdateAsync(userToUpdate);
+        if (result.Succeeded)
+        {
+            return Ok();
+        }
+        return Problem("Failed to update user.");
     }
 }
