@@ -20,9 +20,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
     public class InstanceController : ControllerBase
     {
         private readonly AppDbContext _ctx;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ClassUser> _userManager;
 
-        public InstanceController(AppDbContext ctx, UserManager<IdentityUser> userMng)
+        public InstanceController(AppDbContext ctx, UserManager<ClassUser> userMng)
         {
             _ctx = ctx;
             _userManager = userMng;

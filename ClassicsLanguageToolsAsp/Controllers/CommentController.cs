@@ -18,9 +18,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
     public class CommentController : ControllerBase
     {
         private readonly AppDbContext _ctx;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ClassUser> _userManager;
 
-        public CommentController(AppDbContext ctx, UserManager<IdentityUser> userMng)
+        public CommentController(AppDbContext ctx, UserManager<ClassUser> userMng)
         {
             _ctx = ctx;
             _userManager = userMng;
@@ -66,7 +66,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPost]
         public async Task<IActionResult> AddComment(Comment comment)
         {
-            IdentityUser? currentUser = await _userManager.GetUserAsync(User);
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
                 return Unauthorized();

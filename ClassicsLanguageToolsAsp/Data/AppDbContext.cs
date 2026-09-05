@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 namespace ClassicsLanguageToolsAsp.Data;
 
 // 2. Define your Database Context connection bridge
-public class AppDbContext : IdentityDbContext<IdentityUser>
+public class AppDbContext : IdentityDbContext<ClassUser, IdentityRole, string>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     public DbSet<Vocab> Vocab => Set<Vocab>();

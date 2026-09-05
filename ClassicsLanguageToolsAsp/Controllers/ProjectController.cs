@@ -18,9 +18,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
     public class ProjectController : ControllerBase
     {
         private readonly AppDbContext _ctx;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ClassUser> _userManager;
 
-        public ProjectController(AppDbContext ctx, UserManager<IdentityUser> userManager)
+        public ProjectController(AppDbContext ctx, UserManager<ClassUser> userManager)
         {
             _ctx = ctx;
             _userManager = userManager;
@@ -67,7 +67,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPost]
         public async Task<IActionResult> AddProject(Project project)
         {
-            IdentityUser? currentUser = await _userManager.GetUserAsync(User);
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
                 return Unauthorized();

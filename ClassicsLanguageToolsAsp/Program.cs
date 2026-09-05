@@ -24,9 +24,6 @@ public class Program
             });
         });
 
-    builder.Services.AddIdentityApiEndpoints<IdentityUser>()
-            .AddEntityFrameworkStores<AppDbContext>();
-
         builder.Services.AddAuthorization();
         // Add services to the container.
         // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -48,7 +45,12 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        // builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<AppDbContext>();
+        builder.Services.AddIdentityApiEndpoints<ClassUser>()
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+        builder.Services.AddAuthorization();
+        
 
         var app = builder.Build();
 
@@ -69,7 +71,7 @@ public class Program
         
         app.MapControllers();
         
-        app.MapIdentityApi<IdentityUser>();
+        app.MapIdentityApi<ClassUser>();
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider

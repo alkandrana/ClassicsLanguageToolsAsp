@@ -10,7 +10,7 @@ public class Project
     public string Work { get; set; }
     public DateTime StartDate { get; set; }
     public DateOnly? Deadline { get; set; }
-    public IdentityUser? Creator { get; set; }
+    public ClassUser? Creator { get; set; }
     
     public ICollection<VocabInstance> VocabList { get; set; } = new List<VocabInstance>();
 }

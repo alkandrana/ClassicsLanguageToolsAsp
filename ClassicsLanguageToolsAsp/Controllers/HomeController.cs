@@ -95,7 +95,7 @@ public class HomeController : Controller
         IdentityResult result = await _userManager.UpdateAsync(userToUpdate);
         if (result.Succeeded)
         {
-            return Ok();
+            return Ok(userToUpdate);
         }
         return Problem("Failed to update user.");
     }
