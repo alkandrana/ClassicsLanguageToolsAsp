@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -38,7 +38,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return BadRequest();
             }
-            List<Language> languages = await _ctx.Languages.Where(l => l.Name == name).ToListAsync();
+            List<Language> languages = await _ctx
+                .Languages.Where(l => l.Name == name)
+                .ToListAsync();
             return Ok(languages);
         }
 
@@ -55,29 +57,43 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
             return Ok(language);
         }
-        
+
         // POST: language
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<IActionResult> PostLanguage([FromBody] Language language)
         {
+            List<Language> duplicates = await _ctx
+                .Languages.Where(l => l.Name == language.Name)
+                .ToListAsync();
+            if (duplicates.Count > 0)
+            {
+                return Conflict(new ProblemDetails
+                {
+                    Title = "Duplicate name",
+                    Detail = "That language already exists."
+                });
+            }
             _ctx.Languages.Add(language);
             await _ctx.SaveChangesAsync();
 
             return CreatedAtAction("GetLanguage", new { id = language.Id }, language);
         }
-        
+
         // PUT: language/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLanguage([FromRoute] int id, [FromBody] Language language)
+        public async Task<IActionResult> PutLanguage(
+            [FromRoute] int id,
+            [FromBody] Language language
+        )
         {
             if (language == null)
             {
                 return BadRequest();
             }
-            
+
             Language? langToUpdate = await _ctx.Languages.FindAsync(id);
             if (langToUpdate == null)
             {
