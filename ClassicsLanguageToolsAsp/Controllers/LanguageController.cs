@@ -1,13 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using WritingSessionsAspApi.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -15,18 +9,18 @@ namespace ClassicsLanguageToolsAsp.Controllers
     [ApiController]
     public class LanguageController : ControllerBase
     {
-        private readonly AppDbContext _ctx;
+        private readonly IRecordRepo<Language> _langRepo;
 
-        public LanguageController(AppDbContext ctx)
+        public LanguageController(IRecordRepo<Language> langRepo)
         {
-            _ctx = ctx;
+            _langRepo = langRepo;
         }
 
         // GET: language
         [HttpGet]
         public async Task<IActionResult> GetLanguages()
         {
-            List<Language> languages = await _ctx.Languages.ToListAsync();
+            List<Language> languages = await _langRepo.GetAllRecordsAsync();
             return Ok(languages);
         }
 
@@ -38,9 +32,8 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return BadRequest();
             }
-            List<Language> languages = await _ctx
-                .Languages.Where(l => l.Name == name)
-                .ToListAsync();
+            List<Language> languages = await _langRepo
+                .GetSelectRecordsAsync(l => l.Name == name);
             return Ok(languages);
         }
 
@@ -48,7 +41,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLanguage(int id)
         {
-            Language? language = await _ctx.Languages.FindAsync(id);
+            Language? language = await _langRepo.GetRecordByIdAsync(id);
 
             if (language == null)
             {
@@ -63,9 +56,8 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPost]
         public async Task<IActionResult> PostLanguage([FromBody] Language language)
         {
-            List<Language> duplicates = await _ctx
-                .Languages.Where(l => l.Name == language.Name)
-                .ToListAsync();
+            List<Language> duplicates = await _langRepo
+                .GetSelectRecordsAsync(l => l.Name == language.Name);
             if (duplicates.Count > 0)
             {
                 return Conflict(new ProblemDetails
@@ -74,8 +66,11 @@ namespace ClassicsLanguageToolsAsp.Controllers
                     Detail = "That language already exists."
                 });
             }
-            _ctx.Languages.Add(language);
-            await _ctx.SaveChangesAsync();
+            int rowsAffected = await _langRepo.CreateRecordAsync(language);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to create language");
+            }
 
             return CreatedAtAction("GetLanguage", new { id = language.Id }, language);
         }
@@ -89,21 +84,16 @@ namespace ClassicsLanguageToolsAsp.Controllers
             [FromBody] Language language
         )
         {
-            if (language == null)
-            {
-                return BadRequest();
-            }
-
-            Language? langToUpdate = await _ctx.Languages.FindAsync(id);
-            if (langToUpdate == null)
+            int? rowsAffected = await _langRepo.PutRecordAsync(language, id);
+            if (rowsAffected == null)
             {
                 return NotFound();
             }
-
-            langToUpdate.Name = language.Name;
-            await _ctx.SaveChangesAsync();
-
-            return Ok(langToUpdate);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to update language");
+            }
+            return NoContent();
         }
 
         // DELETE: language/5
@@ -111,14 +101,17 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLanguage(int id)
         {
-            var language = await _ctx.Languages.FindAsync(id);
+            var language = await _langRepo.GetRecordByIdAsync(id);
             if (language == null)
             {
                 return NotFound();
             }
 
-            _ctx.Languages.Remove(language);
-            await _ctx.SaveChangesAsync();
+            int rowsAffected = await _langRepo.DeleteRecordAsync(language);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to delete language");
+            }
 
             return NoContent();
         }

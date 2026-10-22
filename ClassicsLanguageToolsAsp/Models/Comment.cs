@@ -9,5 +9,6 @@ public class Comment
     [Required, StringLength(255)] public string Citation { get; set; } = "";
     [Required, StringLength(255)] public string Note { get; set; } = "";
     [Required, StringLength(255)] public string Reference { get; set; } = "";
+    public string? CreatorId { get; set; } = "";
     public ClassUser? Creator { get; set; }
 }

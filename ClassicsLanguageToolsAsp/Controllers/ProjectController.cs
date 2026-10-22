@@ -1,15 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
+using WritingSessionsAspApi.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -17,12 +11,12 @@ namespace ClassicsLanguageToolsAsp.Controllers
     [ApiController]
     public class ProjectController : ControllerBase
     {
-        private readonly AppDbContext _ctx;
+        private readonly IRecordRepo<Project> _projectRepo;
         private readonly UserManager<ClassUser> _userManager;
 
-        public ProjectController(AppDbContext ctx, UserManager<ClassUser> userManager)
+        public ProjectController(IRecordRepo<Project> projRepo, UserManager<ClassUser> userManager)
         {
-            _ctx = ctx;
+            _projectRepo = projRepo;
             _userManager = userManager;
         }
 
@@ -30,14 +24,13 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProjects()
         {
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
-            List<Project> projects = await _ctx.Projects
-                .Where(p => p.Creator.Id == currentUserId)
-                .ToListAsync();
+            List<Project> projects = await _projectRepo
+                .GetSelectRecordsAsync(p => p.CreatorId == currentUser.Id);
             return Ok(projects);
         }
 
@@ -45,16 +38,17 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProject(int id)
         {
-            Project? project = await _ctx.Projects
-                .Include(p => p.VocabList).ThenInclude(i => i.Vocab)
-                .SingleOrDefaultAsync(p => p.Id == id);
+            Project? project = await _projectRepo
+                .GetRecordByIdAsync(id, qu => qu
+                    .Include(p => p.VocabList)
+                    .ThenInclude(i => i.Vocab));
             if (project == null)
             {
                 return NotFound();
             }
-            string projectUserId = await _ctx.Projects.Where(p => p.Id == id).Select(p => p.Creator.Id).SingleOrDefaultAsync();
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || currentUserId != projectUserId)
+            // string projectUserId = await _ctx.Projects.Where(p => p.Id == id).Select(p => p.Creator.Id).SingleOrDefaultAsync();
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || currentUser.Id != project.CreatorId)
             {
                 return Unauthorized();
             }
@@ -72,10 +66,14 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
+
             project.Creator = currentUser;
             project.StartDate = DateTime.Now;
-            _ctx.Projects.Add(project);
-            await _ctx.SaveChangesAsync();
+            int rowsAffected = await _projectRepo.CreateRecordAsync(project);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to create project");
+            }
 
             return CreatedAtAction("GetProject", new { id = project.Id }, project);
         }
@@ -84,60 +82,60 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPatch("{id:int}")]
         public async Task<IActionResult> EditProject([FromRoute] int id, [FromBody] JsonPatchDocument<Project> projectData)
         {
-            if (projectData == null)
-            {
-                return BadRequest();
-            }
-            Project? project = await _ctx.Projects
-                .Include(p => p.Creator)
-                .SingleOrDefaultAsync(p => p.Id == id);
-            if (project == null)
+            Project? projectToUpdate = await _projectRepo
+                .GetRecordByIdAsync(id, qu => qu
+                    .Include(p => p.Creator));
+            if (projectToUpdate == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
-            if (currentUserId != project.Creator?.Id)
+            if (currentUser.Id != projectToUpdate.CreatorId)
             {
                 return Forbid();
             }
-            projectData.ApplyTo(project, ModelState);
-            if (!TryValidateModel(project) || !ModelState.IsValid)
+            projectData.ApplyTo(projectToUpdate, ModelState);
+            if (!TryValidateModel(projectToUpdate) || !ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _ctx.SaveChangesAsync();
-            return Ok(project);
+            int rowsAffected = await  _projectRepo.UpdateRecordAsync(projectToUpdate);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to update project");
+            }
+            return Ok(projectToUpdate);
         }
 
         // DELETE: projects/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProject(int id)
         {
-            var project = await _ctx.Projects
-                .Include(p => p.Creator)
-                .SingleOrDefaultAsync(p => p.Id == id);
+            var project = await _projectRepo.GetRecordByIdAsync(id);
             if (project == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
 
-            if (currentUserId != project.Creator?.Id)
+            if (currentUser.Id != project.CreatorId)
             {
                 return Forbid();
             }
-            _ctx.Projects.Remove(project);
-            await _ctx.SaveChangesAsync();
-
+            int rowsAffected = await _projectRepo.DeleteRecordAsync(project);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to delete project");
+            }
             return NoContent();
         }
     }
