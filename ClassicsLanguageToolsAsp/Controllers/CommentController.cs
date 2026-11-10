@@ -1,13 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using ClassicsLanguageToolsAsp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
-using WritingSessionsAspApi.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
+    [Authorize]
     [Route("comments")]
     [ApiController]
     public class CommentController : ControllerBase

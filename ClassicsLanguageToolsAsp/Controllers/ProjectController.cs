@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
-using WritingSessionsAspApi.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
     [Route("projects")]
     [ApiController]
+    [Authorize]
     public class ProjectController : ControllerBase
     {
         private readonly IRecordRepo<Project> _projectRepo;

@@ -1,11 +1,9 @@
 using System.Linq.Expressions;
 using System.Reflection;
-using ClassicsLanguageToolsAsp.Data;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 
-namespace WritingSessionsAspApi.Data.Contracts;
+namespace ClassicsLanguageToolsAsp.Data.Contracts;
 
 public class RecordRepo<TEntity> : IRecordRepo<TEntity> where TEntity : class
 {

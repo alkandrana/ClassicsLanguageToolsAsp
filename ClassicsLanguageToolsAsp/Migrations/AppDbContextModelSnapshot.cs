@@ -17,6 +17,37 @@ namespace ClassicsLanguageToolsAsp.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.27");
 
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Author", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Cognomen")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nomen")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Praenomen")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Authors");
+                });
+
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.ClassUser", b =>
                 {
                     b.Property<string>("Id")
@@ -123,12 +154,73 @@ namespace ClassicsLanguageToolsAsp.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Languages");
+                });
+
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Line", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Locus")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OpusId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpusId");
+
+                    b.ToTable("Lines");
+                });
+
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Opus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LanguageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("LanguageId");
+
+                    b.HasIndex("Code", "AuthorId")
+                        .IsUnique();
+
+                    b.ToTable("Opera");
                 });
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Project", b =>
@@ -376,6 +468,36 @@ namespace ClassicsLanguageToolsAsp.Migrations
                     b.Navigation("Creator");
                 });
 
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Line", b =>
+                {
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Opus", "Opus")
+                        .WithMany("Lines")
+                        .HasForeignKey("OpusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opus");
+                });
+
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Opus", b =>
+                {
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Author", "Author")
+                        .WithMany("Opera")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Language", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Language");
+                });
+
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Project", b =>
                 {
                     b.HasOne("ClassicsLanguageToolsAsp.Models.ClassUser", "Creator")
@@ -470,9 +592,19 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Author", b =>
+                {
+                    b.Navigation("Opera");
+                });
+
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.ClassUser", b =>
                 {
                     b.Navigation("VocabList");
+                });
+
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Opus", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Project", b =>

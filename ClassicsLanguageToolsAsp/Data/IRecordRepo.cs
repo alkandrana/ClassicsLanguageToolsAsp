@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
-namespace WritingSessionsAspApi.Data.Contracts;
+namespace ClassicsLanguageToolsAsp.Data.Contracts;
 
 public interface IRecordRepo<TEntity>
 {

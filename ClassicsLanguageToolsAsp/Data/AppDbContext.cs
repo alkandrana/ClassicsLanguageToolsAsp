@@ -14,4 +14,7 @@ public class AppDbContext : IdentityDbContext<ClassUser, IdentityRole, string>
     public DbSet<VocabInstance> Instances => Set<VocabInstance>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Project> Projects => Set<Project>();
+    public DbSet<Author> Authors => Set<Author>();
+    public DbSet<Opus> Opera => Set<Opus>();
+    public DbSet<Line> Lines => Set<Line>();
 }

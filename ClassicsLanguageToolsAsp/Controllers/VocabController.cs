@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WritingSessionsAspApi.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers;
 

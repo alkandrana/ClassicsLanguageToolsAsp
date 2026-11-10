@@ -4,7 +4,7 @@ using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
-using WritingSessionsAspApi.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
