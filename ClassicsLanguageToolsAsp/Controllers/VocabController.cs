@@ -52,24 +52,13 @@ public class VocabController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOneVocab(int id)
     {
-        ClassUser? currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
-        {
-            return NotFound();
-        }
         Vocab? vocab = await _vocabRepo
-            .GetRecordByIdAsync(id, qu => qu
-                .Include(v => v.Language)
-            .Include(v => v.Creator));
+            .GetRecordByIdAsync(id, qu => qu.Include(v => v.Language).Include(v => v.Instances));
         if (vocab == null)
         {
             return NotFound();
         } 
         
-        if (vocab.CreatorId != currentUser.Id)
-        {
-            return Unauthorized();
-        }
         return Ok(vocab);
     }
 

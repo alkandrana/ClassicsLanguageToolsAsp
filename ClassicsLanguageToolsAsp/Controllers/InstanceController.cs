@@ -34,7 +34,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return Unauthorized();
             }
             List<VocabInstance> instances = await _instanceRepo
-                .GetSelectRecordsAsync(v => v.Vocab.CreatorId == currentUser.Id);
+                .GetSelectRecordsAsync(vi => vi.Vocab.CreatorId == currentUser.Id);
             return Ok(instances);
         }
         

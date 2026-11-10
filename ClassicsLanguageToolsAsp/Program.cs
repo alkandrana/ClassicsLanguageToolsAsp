@@ -1,12 +1,9 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
-using Microsoft.Identity.Abstractions;
-using Microsoft.Identity.Web.Resource;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Newtonsoft.Json;
 using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp;
 
@@ -32,8 +29,11 @@ public class Program
         builder.Services.AddControllers().AddNewtonsoftJson(options =>
         {
             options.SerializerSettings.ReferenceLoopHandling = 
-                Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                ReferenceLoopHandling.Ignore;
         });
+
+        // Add repository services
+        builder.Services.AddScoped(typeof(IRecordRepo<>), typeof(RecordRepo<>));
         
         // Register your SQLite database connection service
         var connectionString = builder.Configuration
@@ -49,6 +49,7 @@ public class Program
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
         builder.Services.AddAuthorization();
         
 

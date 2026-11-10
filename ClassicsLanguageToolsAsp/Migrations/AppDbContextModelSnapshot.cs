@@ -171,7 +171,6 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Locus")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Number")
@@ -301,11 +300,6 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Citation")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Form")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -316,6 +310,9 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("LineId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("ProjectId")
                         .HasColumnType("INTEGER");
 
@@ -323,6 +320,8 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LineId");
 
                     b.HasIndex("ProjectId");
 
@@ -526,15 +525,23 @@ namespace ClassicsLanguageToolsAsp.Migrations
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.VocabInstance", b =>
                 {
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Line", "Line")
+                        .WithMany("VocabReferences")
+                        .HasForeignKey("LineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ClassicsLanguageToolsAsp.Models.Project", "Project")
                         .WithMany("VocabList")
                         .HasForeignKey("ProjectId");
 
                     b.HasOne("ClassicsLanguageToolsAsp.Models.Vocab", "Vocab")
-                        .WithMany()
+                        .WithMany("Instances")
                         .HasForeignKey("VocabId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Line");
 
                     b.Navigation("Project");
 
@@ -602,6 +609,11 @@ namespace ClassicsLanguageToolsAsp.Migrations
                     b.Navigation("VocabList");
                 });
 
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Line", b =>
+                {
+                    b.Navigation("VocabReferences");
+                });
+
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Opus", b =>
                 {
                     b.Navigation("Lines");
@@ -610,6 +622,11 @@ namespace ClassicsLanguageToolsAsp.Migrations
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Project", b =>
                 {
                     b.Navigation("VocabList");
+                });
+
+            modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Vocab", b =>
+                {
+                    b.Navigation("Instances");
                 });
 #pragma warning restore 612, 618
         }

@@ -44,8 +44,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
         {
             Opus? opus = await _opusRepo
                 .GetRecordByIdAsync(id, qu => qu
-                    .Include(a => a.Author)
-                    .Include(l => l.Language));
+                    .Include(w => w.Author)
+                    .Include(w => w.Language)
+                    .Include(w => w.Lines).ThenInclude(l => l.VocabReferences));
             if (opus == null)
             {
                 return NotFound();
