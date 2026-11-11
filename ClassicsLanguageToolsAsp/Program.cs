@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
-using Microsoft.Identity.Abstractions;
-using Microsoft.Identity.Web.Resource;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using ClassicsLanguageToolsAsp.Data;
@@ -20,7 +15,10 @@ public class Program
         {
             options.AddPolicy("AllowSpecificOrigins", policy =>
             {
-                policy.WithOrigins("http://localhost:5173").AllowAnyMethod().AllowAnyHeader();
+                policy.WithOrigins("http://localhost:5173")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
             });
         });
 
@@ -45,11 +43,31 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        builder.Services.AddAuthorization();
         builder.Services.AddIdentityApiEndpoints<ClassUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
-        builder.Services.AddAuthorization();
+
+        builder.Services.ConfigureApplicationCookie(options => {
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.None;
+            options.ExpireTimeSpan = TimeSpan.FromDays(7);
+            options.SlidingExpiration = true;
+
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            };
+        });
+        
         
 
         var app = builder.Build();
@@ -70,6 +88,12 @@ public class Program
         app.UseAuthorization();
         
         app.MapControllers();
+
+        app.MapPost("/logout", async (SignInManager<ClassUser> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return Results.Ok(new { message = "Logged out successfully" });
+        }).RequireAuthorization();
         
         app.MapIdentityApi<ClassUser>();
         using (var scope = app.Services.CreateScope())

@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Data;
@@ -36,7 +31,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return Unauthorized();
             }
             List<Comment> comments = await _ctx.Comments
-                .Where(c => c.Creator.Id == currentUserId)
+                .Where(c => c.CreatorId == currentUserId)
                 .ToListAsync();
             return Ok(comments);
         }
@@ -82,10 +77,6 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPatch("{id:int}")]
         public async Task<IActionResult> EditComment([FromRoute] int id, [FromBody] JsonPatchDocument<Comment> commentData)
         {
-            if (commentData == null)
-            {
-                return BadRequest();
-            }
             Comment? comment = await _ctx.Comments
                 .Include(c => c.Creator)
                 .SingleOrDefaultAsync(i => i.Id == id);

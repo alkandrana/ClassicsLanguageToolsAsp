@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Data;
@@ -38,7 +33,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return Unauthorized();
             }
             List<VocabInstance> instances =  await _ctx.Instances
-                .Where(v => v.Vocab.Creator.Id == currentUserId)
+                .Where(v => v.Vocab.CreatorId == currentUserId)
                 .ToListAsync();
             return Ok(instances);
         }
@@ -54,7 +49,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             }
 
             List<VocabInstance> vocab = await _ctx.Instances
-                .Where(i => i.Vocab.Creator.Id == currentId && i.ProjectId == id)
+                .Where(i => i.Vocab.CreatorId == currentId && i.ProjectId == id)
                 .Include(i => i.Vocab).ToListAsync();
             return Ok(vocab);
         }
@@ -101,7 +96,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return NotFound();
             }
 
-            if (parent.Creator.Id != currentUserId)
+            if (parent.CreatorId != currentUserId)
             {
                 return Unauthorized();
             }
@@ -115,10 +110,6 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> EditInstance([FromRoute] int id, [FromBody] JsonPatchDocument<VocabInstance> instanceData)
         {
-            if (instanceData == null)
-            {
-                return BadRequest();
-            }
             VocabInstance? instance = await _ctx.Instances
                 .Include(i => i.Vocab)
                 .ThenInclude(v => v.Creator)

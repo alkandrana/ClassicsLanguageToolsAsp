@@ -14,7 +14,7 @@ public class Vocab
     [Required] public int LanguageId { get; set; } 
     public Language? Language { get; set; }
     [Required, StringLength(255)] public string PartOfSpeech { get; set; } = String.Empty;
-    public string? CreatorId { get; set; }
+    [StringLength(36)] public string? CreatorId { get; set; }
     [ForeignKey("CreatorId")] public ClassUser? Creator { get; set; }
     
     public void PrintVocab()
