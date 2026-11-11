@@ -11,4 +11,6 @@ public class Comment
     [Required, StringLength(255)] public string Reference { get; set; } = "";
     [StringLength(36)] public string? CreatorId { get; set; } = "";
     public ClassUser? Creator { get; set; }
+    public int LineId { get; set; }
+    public Line? Line { get; set; }
 }

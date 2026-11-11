@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClassicsLanguageToolsAsp.Models;
@@ -17,6 +16,7 @@ public class Vocab
     [StringLength(36)] public string? CreatorId { get; set; }
     [ForeignKey("CreatorId")] public ClassUser? Creator { get; set; }
     
+    public ICollection<VocabInstance> Instances {get; set;} = new List<VocabInstance>();
     public void PrintVocab()
     {
         Console.WriteLine("Vocab: ");

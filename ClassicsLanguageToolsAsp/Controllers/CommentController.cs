@@ -1,23 +1,25 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.EntityFrameworkCore;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
+    [Authorize]
     [Route("comments")]
     [ApiController]
     public class CommentController : ControllerBase
-    {
-        private readonly AppDbContext _ctx;
+    { 
+        private readonly IRecordRepo<Comment> _commentRepo;
         private readonly UserManager<ClassUser> _userManager;
 
-        public CommentController(AppDbContext ctx, UserManager<ClassUser> userMng)
+        public CommentController(IRecordRepo<Comment> comRepo, UserManager<ClassUser> userMng)
         {
-            _ctx = ctx;
+            _commentRepo = comRepo;
             _userManager = userMng;
         }
 
@@ -30,9 +32,10 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
-            List<Comment> comments = await _ctx.Comments
-                .Where(c => c.CreatorId == currentUserId)
-                .ToListAsync();
+
+            List<Comment> comments = await _commentRepo.
+                GetSelectRecordsAsync(
+                    c => c.CreatorId == currentUserId);
             return Ok(comments);
         }
 
@@ -40,15 +43,14 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetComment(int id)
         {
-            Comment? comment = await _ctx.Comments
-                .Include(c => c.Creator)
-                .SingleOrDefaultAsync(c => c.Id == id);
+            Comment? comment = await _commentRepo
+                .GetRecordByIdAsync(id, qu => qu.Include(c => c.Creator));
             if (comment == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || comment.Creator?.Id != currentUserId)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || comment.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
@@ -67,57 +69,65 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return Unauthorized();
             }
             comment.Creator = currentUser;
-            _ctx.Comments.Add(comment);
-            await _ctx.SaveChangesAsync();
-
+            int rowsAffected = await _commentRepo.CreateRecordAsync(comment);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to create comment.");
+            }
             return CreatedAtAction("GetComment", new { id = comment.Id }, comment);
         }
         
         // PATCH: comments/{id}
         [HttpPatch("{id:int}")]
-        public async Task<IActionResult> EditComment([FromRoute] int id, [FromBody] JsonPatchDocument<Comment> commentData)
+        public async Task<IActionResult> EditComment([FromRoute] int id,
+            [FromBody] JsonPatchDocument<Comment> commentData)
         {
-            Comment? comment = await _ctx.Comments
-                .Include(c => c.Creator)
-                .SingleOrDefaultAsync(i => i.Id == id);
-            if (comment == null)
+            Comment? commentToUpdate = await _commentRepo.GetRecordByIdAsync(id);
+            if (commentToUpdate == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || comment.Creator?.Id != currentUserId)
+
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || commentToUpdate.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
-            commentData.ApplyTo(comment, ModelState);
-            if (!TryValidateModel(comment) || !ModelState.IsValid)
+
+            commentData.ApplyTo(commentToUpdate, ModelState);
+            if (!TryValidateModel(commentToUpdate) || !ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _ctx.SaveChangesAsync();
-            return Ok(comment);
+            int rowsAffected = await _commentRepo.UpdateRecordAsync(commentToUpdate);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to update comment.");
+            }
+        return NoContent();
         }
 
         // DELETE: comments/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteComment(int id)
         {
-            Comment? comment = await _ctx.Comments
-                .Include(c => c.Creator)
-                .SingleOrDefaultAsync(c => c.Id == id);
+            Comment? comment = await _commentRepo.GetRecordByIdAsync(id);
             if (comment == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || comment.Creator?.Id != currentUserId)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || comment.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
 
-            _ctx.Comments.Remove(comment);
-            await _ctx.SaveChangesAsync();
+            int rowsAffected = await _commentRepo.DeleteRecordAsync(comment);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to delete comment.");
+            }
 
             return NoContent();
         }

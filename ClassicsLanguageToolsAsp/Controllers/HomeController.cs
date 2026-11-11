@@ -57,11 +57,6 @@ public class HomeController : Controller
     [Route("/profile")]
     public async Task<IActionResult> EditCurrentUser([FromBody] ClassUser user)
     {
-        if (user == null)
-        {
-            return BadRequest();
-        }
-
         ClassUser? userToUpdate = await _userManager.GetUserAsync(User);
         if (userToUpdate == null)
         {

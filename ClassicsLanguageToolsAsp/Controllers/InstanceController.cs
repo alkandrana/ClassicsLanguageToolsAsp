@@ -1,11 +1,10 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
+using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -14,12 +13,14 @@ namespace ClassicsLanguageToolsAsp.Controllers
     [Authorize]
     public class InstanceController : ControllerBase
     {
-        private readonly AppDbContext _ctx;
+        private readonly IRecordRepo<VocabInstance> _instanceRepo;
+        private readonly IRecordRepo<Vocab> _vocabRepo;
         private readonly UserManager<ClassUser> _userManager;
 
-        public InstanceController(AppDbContext ctx, UserManager<ClassUser> userMng)
+        public InstanceController(IRecordRepo<VocabInstance> instRep, IRecordRepo<Vocab> vocabRepo, UserManager<ClassUser> userMng)
         {
-            _ctx = ctx;
+            _vocabRepo = vocabRepo;
+            _instanceRepo = instRep;
             _userManager = userMng;
         }
 
@@ -27,14 +28,13 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetInstances()
         {
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
-            List<VocabInstance> instances =  await _ctx.Instances
-                .Where(v => v.Vocab.CreatorId == currentUserId)
-                .ToListAsync();
+            List<VocabInstance> instances = await _instanceRepo
+                .GetSelectRecordsAsync(vi => vi.Vocab.CreatorId == currentUser.Id);
             return Ok(instances);
         }
         
@@ -42,15 +42,16 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [Route("/instances/project/{id:int}")]
         public async Task<IActionResult> GetInstancesByProject(int id)
         {
-            string? currentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
 
-            List<VocabInstance> vocab = await _ctx.Instances
-                .Where(i => i.Vocab.CreatorId == currentId && i.ProjectId == id)
-                .Include(i => i.Vocab).ToListAsync();
+            List<VocabInstance> vocab = await _instanceRepo
+                .GetSelectRecordsAsync(
+                i => i.Vocab.CreatorId == currentUser.Id && i.ProjectId == id, 
+                qu => qu.Include(i => i.Vocab));
             return Ok(vocab);
         }
 
@@ -58,21 +59,25 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetInstance(int id)
         {
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
-            VocabInstance? instance = await _ctx.Instances
-                .Include(i => i.Vocab)
-                .ThenInclude(v => v.Creator)
-                .SingleOrDefaultAsync(v => v.Id == id);
+
+            VocabInstance? instance =
+                await _instanceRepo
+                    .GetRecordByIdAsync(
+                        id, 
+                        qu => qu
+                            .Include(i => i.Vocab)
+                        );
             if (instance == null)
             {
                 return NotFound();
             }
 
-            if (instance.Vocab?.Creator?.Id != currentUserId)
+            if (instance.Vocab?.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
@@ -85,24 +90,31 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPost]
         public async Task<IActionResult> AddInstance(VocabInstance instance)
         {
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
             {
                 return Unauthorized();
             }
-            Vocab? parent = await _ctx.Vocab.Include(v => v.Creator).SingleOrDefaultAsync(v => v.Id == instance.VocabId);
+            Vocab? parent = await _vocabRepo
+                .GetRecordByIdAsync(
+                    instance.VocabId, 
+                    qu => qu.Include(v => v.Creator)
+                );
             if (parent == null)
             {
                 return NotFound();
             }
 
-            if (parent.CreatorId != currentUserId)
+            if (parent.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
-            _ctx.Instances.Add(instance);
-            await _ctx.SaveChangesAsync();
 
+            int rowsAffected = await _instanceRepo.CreateRecordAsync(instance);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to create vocab instance.");
+            }
             return CreatedAtAction("GetInstance", new { id = instance.Id }, instance);
         }
         
@@ -110,49 +122,55 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> EditInstance([FromRoute] int id, [FromBody] JsonPatchDocument<VocabInstance> instanceData)
         {
-            VocabInstance? instance = await _ctx.Instances
-                .Include(i => i.Vocab)
-                .ThenInclude(v => v.Creator)
-                .SingleOrDefaultAsync(i => i.Id == id);
-            if (instance == null)
+            VocabInstance? instanceToUpdate = await _instanceRepo
+                .GetRecordByIdAsync(id, qu => qu
+                        .Include(i => i.Vocab)
+                        .ThenInclude(v => v.Creator));
+            if (instanceToUpdate == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || instance.Vocab?.Creator?.Id != currentUserId)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || instanceToUpdate.Vocab?.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
-            instanceData.ApplyTo(instance, ModelState);
-            if (!TryValidateModel(instance) || !ModelState.IsValid)
+            instanceData.ApplyTo(instanceToUpdate, ModelState);
+            if (!TryValidateModel(instanceToUpdate) || !ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _ctx.SaveChangesAsync();
-            return Ok(instance);
+            int rowsAffected = await _instanceRepo.UpdateRecordAsync(instanceToUpdate);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to update vocab instance.");
+            }
+            return Ok(instanceToUpdate);
         }
 
         // DELETE: instances/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteInstance(int id)
         {
-            VocabInstance? instance = await _ctx.Instances
-                .Include(v => v.Vocab)
-                .ThenInclude(v => v.Creator)
-                .SingleOrDefaultAsync(v => v.Id == id);
+            VocabInstance? instance = await _instanceRepo
+                .GetRecordByIdAsync(id, qu => qu
+                    .Include(i => i.Vocab));
             if (instance == null)
             {
                 return NotFound();
             }
-            string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null || instance.Vocab?.Creator?.Id != currentUserId)
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || instance.Vocab?.CreatorId != currentUser.Id)
             {
                 return Unauthorized();
             }
             
-            _ctx.Instances.Remove(instance);
-            await _ctx.SaveChangesAsync();
+            int rowsAffected = await _instanceRepo.DeleteRecordAsync(instance);
+            if (rowsAffected == 0)
+            {
+                return Problem("Failed to delete vocab instance.");
+            }
 
             return NoContent();
         }
