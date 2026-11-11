@@ -13,40 +13,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowSpecificOrigins", policy =>
-            {
-                policy.WithOrigins("http://localhost:5173")
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-            });
-        });
-
-        builder.Services.AddAuthorization();
-        // Add services to the container.
-        // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        //      .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
-
-        builder.Services.AddControllers().AddNewtonsoftJson(options =>
-        {
-            options.SerializerSettings.ReferenceLoopHandling = 
-                ReferenceLoopHandling.Ignore;
-        });
-
-        // Add repository services
-        builder.Services.AddScoped(typeof(IRecordRepo<>), typeof(RecordRepo<>));
-        
-        // Register your SQLite database connection service
+         // Register your SQLite database connection service
         var connectionString = builder.Configuration
             .GetConnectionString("SqliteConnection");
         builder.Services.AddDbContext<AppDbContext>(options => 
             options.UseSqlite(connectionString));
-        
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
 
         builder.Services.AddAuthorization();
         builder.Services.AddIdentityApiEndpoints<ClassUser>()
@@ -72,14 +43,36 @@ public class Program
                 return Task.CompletedTask;
             };
         });
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowSpecificOrigins", policy =>
+            {
+                policy.WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+            });
+        });
+
+        builder.Services.AddControllers().AddNewtonsoftJson(options =>
+        {
+            options.SerializerSettings.ReferenceLoopHandling = 
+                ReferenceLoopHandling.Ignore;
+        });
+
+        // Add repository services
+        builder.Services.AddScoped(typeof(IRecordRepo<>), typeof(RecordRepo<>));
         
+       
         
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
-
-        
 
         if (app.Environment.IsDevelopment())
         {

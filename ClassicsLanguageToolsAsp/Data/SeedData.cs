@@ -9,7 +9,7 @@ public class SeedData
 {
     public static void Seed(AppDbContext ctx)
     {
-        if (!ctx.Projects.Any())
+        if (!ctx.Languages.Any())
         {
             Language latin = new Language { Name = "Latin" };
             ctx.Languages.Add(latin);
