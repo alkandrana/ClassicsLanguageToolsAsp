@@ -10,5 +10,6 @@ public class Line
     public string? Locus { get; set; } = "";
     public int OpusId { get; set; }
     public Opus? Opus { get; set; }
-    public ICollection<VocabInstance> VocabReferences { get; set; } = new List<VocabInstance>();
+    public ICollection<VocabInstance> VocabReferences { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
 }

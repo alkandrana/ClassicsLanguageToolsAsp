@@ -129,6 +129,9 @@ namespace ClassicsLanguageToolsAsp.Migrations
                     b.Property<string>("CreatorId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("LineId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -142,6 +145,8 @@ namespace ClassicsLanguageToolsAsp.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatorId");
+
+                    b.HasIndex("LineId");
 
                     b.ToTable("Comments");
                 });
@@ -464,7 +469,15 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .WithMany()
                         .HasForeignKey("CreatorId");
 
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Line", "Line")
+                        .WithMany("Comments")
+                        .HasForeignKey("LineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Creator");
+
+                    b.Navigation("Line");
                 });
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Line", b =>
@@ -611,6 +624,8 @@ namespace ClassicsLanguageToolsAsp.Migrations
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Line", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("VocabReferences");
                 });
 
