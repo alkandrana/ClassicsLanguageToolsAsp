@@ -4,7 +4,7 @@ namespace ClassicsLanguageToolsAsp.Data.Contracts;
 
 public interface IRecordRepo<TEntity>
 {
-    public Task<List<TEntity>> GetAllRecordsAsync();
+    public Task<List<TEntity>> GetAllRecordsAsync(Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);
     public Task<List<TEntity>> GetSelectRecordsAsync(Expression<Func<TEntity, bool>> filter, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);
     
     public Task<TEntity?> GetRecordByIdAsync(int id, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);

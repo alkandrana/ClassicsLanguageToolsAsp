@@ -21,7 +21,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOpera()
         {
-            List<Opus> opera = await _opusRepo.GetAllRecordsAsync();
+            List<Opus> opera = await _opusRepo.GetAllRecordsAsync(qu => qu.Include(w => w.Author).Include(w => w.Language));
             return Ok(opera);
         }
 

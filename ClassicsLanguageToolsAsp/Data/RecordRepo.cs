@@ -16,9 +16,13 @@ public class RecordRepo<TEntity> : IRecordRepo<TEntity> where TEntity : class
         _dbSet = _ctx.Set<TEntity>();
     }
     
-    public async Task<List<TEntity>> GetAllRecordsAsync()
+    public async Task<List<TEntity>> GetAllRecordsAsync(Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null)
     {
-        List<TEntity> records = await _dbSet.ToListAsync();
+        IQueryable<TEntity> query = _dbSet;
+        if (include != null){
+            query = include(query);
+        }
+        List<TEntity> records = await query.ToListAsync();
         return records;
     }
 
