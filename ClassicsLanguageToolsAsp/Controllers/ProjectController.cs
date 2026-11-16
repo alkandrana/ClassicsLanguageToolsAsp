@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using ClassicsLanguageToolsAsp.Data.Contracts;
 
@@ -46,7 +45,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
-            List<Project> projects = await _projectRepo.GetSelectRecordsAsync(p => p.OpusId == id && p.CreatorId == currentUser.Id);
+            List<Project> projects = await _projectRepo
+            .GetSelectRecordsAsync(p => p.OpusId == id &&
+            p.CreatorId == currentUser.Id);
             if (projects.Count == 0)
             {
                 return NotFound();

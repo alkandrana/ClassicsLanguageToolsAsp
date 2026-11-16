@@ -127,6 +127,7 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CreatorId")
+                        .HasMaxLength(36)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("LineId")
@@ -136,6 +137,9 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Reference")
                         .IsRequired()
@@ -147,6 +151,8 @@ namespace ClassicsLanguageToolsAsp.Migrations
                     b.HasIndex("CreatorId");
 
                     b.HasIndex("LineId");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("Comments");
                 });
@@ -246,16 +252,22 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("LastLineId")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<string>("Work")
-                        .IsRequired()
+                    b.Property<int>("OpusId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatorId");
+
+                    b.HasIndex("LastLineId");
+
+                    b.HasIndex("OpusId");
 
                     b.ToTable("Projects");
                 });
@@ -267,6 +279,7 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CreatorId")
+                        .HasMaxLength(36)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Definition")
@@ -475,6 +488,10 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Project", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("ProjectId");
+
                     b.Navigation("Creator");
 
                     b.Navigation("Line");
@@ -516,7 +533,23 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .WithMany()
                         .HasForeignKey("CreatorId");
 
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Line", "LastLine")
+                        .WithMany()
+                        .HasForeignKey("LastLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ClassicsLanguageToolsAsp.Models.Opus", "Opus")
+                        .WithMany()
+                        .HasForeignKey("OpusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Creator");
+
+                    b.Navigation("LastLine");
+
+                    b.Navigation("Opus");
                 });
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Vocab", b =>
@@ -636,6 +669,8 @@ namespace ClassicsLanguageToolsAsp.Migrations
 
             modelBuilder.Entity("ClassicsLanguageToolsAsp.Models.Project", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("VocabList");
                 });
 
