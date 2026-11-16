@@ -37,19 +37,38 @@ namespace ClassicsLanguageToolsAsp.Controllers
             return Ok(projects);
         }
 
+        //GET: projects/work/5
+        [HttpGet("work/{id:int}")]
+        public async Task<IActionResult> GetProjectByWork(int id)
+        {
+            ClassUser? currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized();
+            }
+            List<Project> projects = await _projectRepo.GetSelectRecordsAsync(p => p.OpusId == id && p.CreatorId == currentUser.Id);
+            if (projects.Count == 0)
+            {
+                return NotFound();
+            }
+            return Ok(projects);
+        }
+
         // GET: projects/5
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProject(int id)
         {
             Project? project = await _projectRepo
                 .GetRecordByIdAsync(id, qu => qu
-                    .Include(p => p.VocabList)
+                .Include(p => p.Opus).ThenInclude(w => w.Lines)
+                .Include(p => p.LastLine)
+                .Include(p => p.Comments)
+                .Include(p => p.VocabList)
                     .ThenInclude(i => i.Vocab));
             if (project == null)
             {
                 return NotFound();
             }
-            // string projectUserId = await _ctx.Projects.Where(p => p.Id == id).Select(p => p.Creator.Id).SingleOrDefaultAsync();
             ClassUser? currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null || currentUser.Id != project.CreatorId)
             {
@@ -80,7 +99,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
             return CreatedAtAction("GetProject", new { id = project.Id }, project);
         }
-        
+
         // PATCH: projects/{id}
         [HttpPatch("{id:int}")]
         public async Task<IActionResult> EditProject([FromRoute] int id, [FromBody] JsonPatchDocument<Project> projectData)
@@ -107,7 +126,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return BadRequest(ModelState);
             }
 
-            int rowsAffected = await  _projectRepo.UpdateRecordAsync(projectToUpdate);
+            int rowsAffected = await _projectRepo.UpdateRecordAsync(projectToUpdate);
             if (rowsAffected == 0)
             {
                 return Problem("Failed to update project");
