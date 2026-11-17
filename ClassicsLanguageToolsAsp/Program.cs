@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
 using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
-using ClassicsLanguageToolsAsp.Data.Contracts;
 
 namespace ClassicsLanguageToolsAsp;
 
@@ -13,10 +12,10 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-         // Register your SQLite database connection service
+        // Register your SQLite database connection service
         var connectionString = builder.Configuration
             .GetConnectionString("SqliteConnection");
-        builder.Services.AddDbContext<AppDbContext>(options => 
+        builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite(connectionString));
 
         builder.Services.AddAuthorization();
@@ -25,7 +24,8 @@ public class Program
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        builder.Services.ConfigureApplicationCookie(options => {
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
             options.Cookie.HttpOnly = true;
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             options.Cookie.SameSite = SameSiteMode.None;
@@ -57,15 +57,15 @@ public class Program
 
         builder.Services.AddControllers().AddNewtonsoftJson(options =>
         {
-            options.SerializerSettings.ReferenceLoopHandling = 
+            options.SerializerSettings.ReferenceLoopHandling =
                 ReferenceLoopHandling.Ignore;
         });
 
         // Add repository services
         builder.Services.AddScoped(typeof(IRecordRepo<>), typeof(RecordRepo<>));
-        
-       
-        
+
+
+
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
@@ -79,12 +79,12 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        
+
         app.UseHttpsRedirection();
         app.UseCors("AllowSpecificOrigins");
         app.UseAuthentication();
         app.UseAuthorization();
-        
+
         app.MapControllers();
 
         app.MapPost("/logout", async (SignInManager<ClassUser> signInManager) =>
@@ -92,7 +92,7 @@ public class Program
             await signInManager.SignOutAsync();
             return Results.Ok(new { message = "Logged out successfully" });
         }).RequireAuthorization();
-        
+
         app.MapIdentityApi<ClassUser>();
         using (var scope = app.Services.CreateScope())
         {

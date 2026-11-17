@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 
-namespace ClassicsLanguageToolsAsp.Data.Contracts;
+namespace ClassicsLanguageToolsAsp.Data;
 
 public class RecordRepo<TEntity> : IRecordRepo<TEntity> where TEntity : class
 {
@@ -15,11 +15,12 @@ public class RecordRepo<TEntity> : IRecordRepo<TEntity> where TEntity : class
         _ctx = ctx;
         _dbSet = _ctx.Set<TEntity>();
     }
-    
+
     public async Task<List<TEntity>> GetAllRecordsAsync(Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null)
     {
         IQueryable<TEntity> query = _dbSet;
-        if (include != null){
+        if (include != null)
+        {
             query = include(query);
         }
         List<TEntity> records = await query.ToListAsync();
@@ -63,7 +64,7 @@ public class RecordRepo<TEntity> : IRecordRepo<TEntity> where TEntity : class
         List<TEntity> records = await query.Where(e => EF.Property<string>(e, propName).ToLower() == code.ToLower()).ToListAsync();
         return records;
     }
-    
+
     // public async Task<bool> Check
 
     public async Task<int> CreateRecordAsync(TEntity record)

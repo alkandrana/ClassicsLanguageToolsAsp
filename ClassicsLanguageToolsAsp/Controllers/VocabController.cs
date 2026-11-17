@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers;
 
@@ -15,7 +15,7 @@ public class VocabController : ControllerBase
 {
     private IRecordRepo<Vocab> _vocabRepo;
     private UserManager<ClassUser> _userManager;
-    
+
     public VocabController(IRecordRepo<Vocab> vocabRepo, UserManager<ClassUser> userMng)
     {
         _vocabRepo = vocabRepo;
@@ -44,7 +44,7 @@ public class VocabController : ControllerBase
             return Unauthorized();
         }
         List<Vocab> vocab = await _vocabRepo
-            .GetSelectRecordsAsync(v => v.LanguageId == languageId && 
+            .GetSelectRecordsAsync(v => v.LanguageId == languageId &&
                         v.CreatorId == currentUser.Id);
         return Ok(vocab);
     }
@@ -57,8 +57,8 @@ public class VocabController : ControllerBase
         if (vocab == null)
         {
             return NotFound();
-        } 
-        
+        }
+
         return Ok(vocab);
     }
 
@@ -85,7 +85,7 @@ public class VocabController : ControllerBase
         {
             return Problem("Failed to create vocab.");
         }
-        return CreatedAtAction(nameof(GetOneVocab), 
+        return CreatedAtAction(nameof(GetOneVocab),
             new { id = newVocab.Id }, newVocab);
     }
 
@@ -119,7 +119,7 @@ public class VocabController : ControllerBase
         {
             return NotFound();
         }
-        
+
         Vocab? vocab = await _vocabRepo
             .GetRecordByIdAsync(id);
         if (vocab == null)
@@ -131,7 +131,7 @@ public class VocabController : ControllerBase
         {
             return Unauthorized();
         }
-        
+
         int rowsAffected = await _vocabRepo.DeleteRecordAsync(vocab);
         if (rowsAffected == 0)
         {

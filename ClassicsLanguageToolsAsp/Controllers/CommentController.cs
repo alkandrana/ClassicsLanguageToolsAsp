@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -13,7 +13,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
     [Route("comments")]
     [ApiController]
     public class CommentController : ControllerBase
-    { 
+    {
         private readonly IRecordRepo<Comment> _commentRepo;
         private readonly UserManager<ClassUser> _userManager;
 
@@ -54,7 +54,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
-            
+
             return Ok(comment);
         }
 
@@ -76,7 +76,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             }
             return CreatedAtAction("GetComment", new { id = comment.Id }, comment);
         }
-        
+
         // PATCH: comments/{id}
         [HttpPatch("{id:int}")]
         public async Task<IActionResult> EditComment([FromRoute] int id,
@@ -105,7 +105,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Problem("Failed to update comment.");
             }
-        return NoContent();
+            return NoContent();
         }
 
         // DELETE: comments/5

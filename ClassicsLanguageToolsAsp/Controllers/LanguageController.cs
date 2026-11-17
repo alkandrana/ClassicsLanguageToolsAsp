@@ -1,7 +1,7 @@
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {

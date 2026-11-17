@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.JsonPatch;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -64,7 +64,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
             return CreatedAtAction("GetAuthor", new { id = author.Id }, author);
         }
-        
+
         // PATCH: opera/{id}
         [HttpPatch("{id:int}")]
         public async Task<IActionResult> EditAuthor([FromRoute] int id, [FromBody] JsonPatchDocument<Author> authorData)
@@ -81,7 +81,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return BadRequest(ModelState);
             }
 
-            int rowsAffected = await  _authorRepo.UpdateRecordAsync(authorToUpdate);
+            int rowsAffected = await _authorRepo.UpdateRecordAsync(authorToUpdate);
             if (rowsAffected == 0)
             {
                 return Problem("Failed to update author");

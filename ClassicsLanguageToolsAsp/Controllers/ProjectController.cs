@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Models;
+using ClassicsLanguageToolsAsp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
+using System.Security.Permissions;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -14,11 +16,15 @@ namespace ClassicsLanguageToolsAsp.Controllers
     public class ProjectController : ControllerBase
     {
         private readonly IRecordRepo<Project> _projectRepo;
+        private readonly IRecordRepo<Opus> _opusRepo;
+        private readonly IRecordRepo<VocabInstance> _instanceRepo;
         private readonly UserManager<ClassUser> _userManager;
 
-        public ProjectController(IRecordRepo<Project> projRepo, UserManager<ClassUser> userManager)
+        public ProjectController(IRecordRepo<Project> projRepo, IRecordRepo<Opus> opusRepo, IRecordRepo<VocabInstance> instRepo, UserManager<ClassUser> userManager)
         {
             _projectRepo = projRepo;
+            _opusRepo = opusRepo;
+            _instanceRepo = instRepo;
             _userManager = userManager;
         }
 
@@ -56,25 +62,40 @@ namespace ClassicsLanguageToolsAsp.Controllers
         }
 
         // GET: projects/5
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetProject(int id)
+        [HttpGet("{opusId:int}")]
+        public async Task<IActionResult> GetProject(int opusId)
         {
-            Project? project = await _projectRepo
-                .GetRecordByIdAsync(id, qu => qu
-                .Include(p => p.Opus).ThenInclude(w => w.Lines)
-                .Include(p => p.LastLine)
-                .Include(p => p.Comments)
-                .Include(p => p.VocabList)
-                    .ThenInclude(i => i.Vocab));
-            if (project == null)
+            Opus? opus = await _opusRepo
+                .GetRecordByIdAsync(opusId, qu => qu.Include(w => w.Author).Include(w => w.Lines));
+            Console.WriteLine($"Opus Located: {opus != null}");
+            if (opus == null)
             {
                 return NotFound();
             }
-            ClassUser? currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null || currentUser.Id != project.CreatorId)
+            List<VocabInstance> vocabReferences = await _instanceRepo.GetSelectRecordsAsync(vr => vr.Line.OpusId == opusId, qu => qu.Include(vr => vr.Vocab));
+
+            List<Line> lines = opus.Lines.ToList();
+            List<string> sections = lines.DistinctBy(li => li.Locus).Select(li => li.Locus).ToList();
+            Dictionary<string, Dictionary<int, string>> linesByCategory = [];
+            foreach (string sec in sections)
             {
-                return Unauthorized();
+                Dictionary<int, string> linesText = new Dictionary<int, string>();
+                List<Line> group = lines.Where(li => li.Locus == sec).OrderBy(li => li.Number).ToList();
+                foreach (Line line in group)
+                {
+                    linesText.Add(line.Number, line.Text);
+                }
+                linesByCategory.Add(sec, linesText);
             }
+
+            ProjectVM project = new ProjectVM
+            {
+                Code = opus.Code,
+                Title = opus.Title,
+                AuthorName = opus.Author != null ? opus.Author.Name : "Anonymous",
+                Lines = linesByCategory,
+                Vocab = vocabReferences
+            };
 
             return Ok(project);
         }

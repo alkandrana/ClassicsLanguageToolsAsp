@@ -4,7 +4,7 @@ using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -37,7 +37,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 .GetSelectRecordsAsync(vi => vi.Vocab.CreatorId == currentUser.Id);
             return Ok(instances);
         }
-        
+
         [HttpGet]
         [Route("/instances/project/{id:int}")]
         public async Task<IActionResult> GetInstancesByProject(int id)
@@ -50,7 +50,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
             List<VocabInstance> vocab = await _instanceRepo
                 .GetSelectRecordsAsync(
-                i => i.Vocab.CreatorId == currentUser.Id && i.ProjectId == id, 
+                i => i.Vocab.CreatorId == currentUser.Id && i.ProjectId == id,
                 qu => qu.Include(i => i.Vocab));
             return Ok(vocab);
         }
@@ -68,7 +68,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             VocabInstance? instance =
                 await _instanceRepo
                     .GetRecordByIdAsync(
-                        id, 
+                        id,
                         qu => qu
                             .Include(i => i.Vocab)
                         );
@@ -97,7 +97,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             }
             Vocab? parent = await _vocabRepo
                 .GetRecordByIdAsync(
-                    instance.VocabId, 
+                    instance.VocabId,
                     qu => qu.Include(v => v.Creator)
                 );
             if (parent == null)
@@ -117,7 +117,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             }
             return CreatedAtAction("GetInstance", new { id = instance.Id }, instance);
         }
-        
+
         // PATCH: instances/{id}
         [HttpPatch("{id}")]
         public async Task<IActionResult> EditInstance([FromRoute] int id, [FromBody] JsonPatchDocument<VocabInstance> instanceData)
@@ -165,7 +165,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
-            
+
             int rowsAffected = await _instanceRepo.DeleteRecordAsync(instance);
             if (rowsAffected == 0)
             {

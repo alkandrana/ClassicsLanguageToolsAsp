@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.JsonPatch;
-using ClassicsLanguageToolsAsp.Data.Contracts;
+using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -46,7 +46,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 .GetRecordByIdAsync(id, qu => qu
                     .Include(w => w.Author)
                     .Include(w => w.Language)
-                    .Include(w => w.Lines).ThenInclude(l => l.VocabReferences));
+                    .Include(w => w.Lines));
             if (opus == null)
             {
                 return NotFound();
@@ -68,7 +68,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
             return CreatedAtAction("GetOpus", new { id = opus.Id }, opus);
         }
-        
+
         // PATCH: opera/{id}
         [HttpPatch("{id:int}")]
         public async Task<IActionResult> EditOpus([FromRoute] int id, [FromBody] JsonPatchDocument<Opus> opusData)
@@ -85,7 +85,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                 return BadRequest(ModelState);
             }
 
-            int rowsAffected = await  _opusRepo.UpdateRecordAsync(opusToUpdate);
+            int rowsAffected = await _opusRepo.UpdateRecordAsync(opusToUpdate);
             if (rowsAffected == 0)
             {
                 return Problem("Failed to update opus");
