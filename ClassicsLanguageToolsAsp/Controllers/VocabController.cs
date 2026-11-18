@@ -1,10 +1,10 @@
+using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers;
 
@@ -30,7 +30,9 @@ public class VocabController : ControllerBase
         {
             return Unauthorized();
         }
-        List<Vocab> vocab = await _vocabRepo.GetSelectRecordsAsync(v => v.CreatorId == currentUser.Id);
+        List<Vocab> vocab = await _vocabRepo.GetSelectRecordsAsync(v =>
+            v.CreatorId == currentUser.Id
+        );
         return Ok(vocab);
     }
 
@@ -43,17 +45,39 @@ public class VocabController : ControllerBase
         {
             return Unauthorized();
         }
-        List<Vocab> vocab = await _vocabRepo
-            .GetSelectRecordsAsync(v => v.LanguageId == languageId &&
-                        v.CreatorId == currentUser.Id);
+        List<Vocab> vocab = await _vocabRepo.GetSelectRecordsAsync(v =>
+            v.LanguageId == languageId && v.CreatorId == currentUser.Id
+        );
+        return Ok(vocab);
+    }
+
+    [HttpGet]
+    [Route("/vocab/lemma/{lemma}")]
+    public async Task<IActionResult> GetVocabByLemma(string lemma)
+    {
+        ClassUser? currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Unauthorized();
+        }
+        List<Vocab> vocabOptions = await _vocabRepo.GetSelectRecordsAsync(v =>
+            v.Lemma == lemma && v.CreatorId == currentUser.Id
+        );
+        Vocab? vocab = vocabOptions.SingleOrDefault(v => v.Lemma == lemma);
+        if (vocab == null)
+        {
+            return NotFound();
+        }
         return Ok(vocab);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOneVocab(int id)
     {
-        Vocab? vocab = await _vocabRepo
-            .GetRecordByIdAsync(id, qu => qu.Include(v => v.Language).Include(v => v.Instances));
+        Vocab? vocab = await _vocabRepo.GetRecordByIdAsync(
+            id,
+            qu => qu.Include(v => v.Language).Include(v => v.Instances)
+        );
         if (vocab == null)
         {
             return NotFound();
@@ -71,26 +95,32 @@ public class VocabController : ControllerBase
             return NotFound();
         }
         newVocab.Creator = currentUser;
-        List<Vocab> duplicates = await _vocabRepo.GetSelectRecordsAsync(v => v.Lemma == newVocab.Lemma);
+        List<Vocab> duplicates = await _vocabRepo.GetSelectRecordsAsync(v =>
+            v.Lemma == newVocab.Lemma
+        );
         if (duplicates.Count > 0)
         {
-            return Conflict(new ProblemDetails
-            {
-                Title = "Duplicate entry",
-                Detail = "That vocab entry already exists.",
-            });
+            return Conflict(
+                new ProblemDetails
+                {
+                    Title = "Duplicate entry",
+                    Detail = "That vocab entry already exists.",
+                }
+            );
         }
         int rowsAffected = await _vocabRepo.CreateRecordAsync(newVocab);
         if (rowsAffected == 0)
         {
             return Problem("Failed to create vocab.");
         }
-        return CreatedAtAction(nameof(GetOneVocab),
-            new { id = newVocab.Id }, newVocab);
+        return CreatedAtAction(nameof(GetOneVocab), new { id = newVocab.Id }, newVocab);
     }
 
     [HttpPatch("{id}")]
-    public async Task<IActionResult> EditVocab([FromRoute] int id, [FromBody] JsonPatchDocument<Vocab> vocabData)
+    public async Task<IActionResult> EditVocab(
+        [FromRoute] int id,
+        [FromBody] JsonPatchDocument<Vocab> vocabData
+    )
     {
         Vocab? vocab = await _vocabRepo.GetRecordByIdAsync(id);
         if (vocab == null)
@@ -120,8 +150,7 @@ public class VocabController : ControllerBase
             return NotFound();
         }
 
-        Vocab? vocab = await _vocabRepo
-            .GetRecordByIdAsync(id);
+        Vocab? vocab = await _vocabRepo.GetRecordByIdAsync(id);
         if (vocab == null)
         {
             return NotFound();
@@ -140,4 +169,3 @@ public class VocabController : ControllerBase
         return NoContent();
     }
 }
-

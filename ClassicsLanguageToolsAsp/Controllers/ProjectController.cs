@@ -1,12 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using ClassicsLanguageToolsAsp.Data;
 using ClassicsLanguageToolsAsp.Models;
-using ClassicsLanguageToolsAsp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
-using ClassicsLanguageToolsAsp.Data;
-using System.Security.Permissions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -20,7 +18,12 @@ namespace ClassicsLanguageToolsAsp.Controllers
         private readonly IRecordRepo<VocabInstance> _instanceRepo;
         private readonly UserManager<ClassUser> _userManager;
 
-        public ProjectController(IRecordRepo<Project> projRepo, IRecordRepo<Opus> opusRepo, IRecordRepo<VocabInstance> instRepo, UserManager<ClassUser> userManager)
+        public ProjectController(
+            IRecordRepo<Project> projRepo,
+            IRecordRepo<Opus> opusRepo,
+            IRecordRepo<VocabInstance> instRepo,
+            UserManager<ClassUser> userManager
+        )
         {
             _projectRepo = projRepo;
             _opusRepo = opusRepo;
@@ -37,8 +40,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
-            List<Project> projects = await _projectRepo
-                .GetSelectRecordsAsync(p => p.CreatorId == currentUser.Id);
+            List<Project> projects = await _projectRepo.GetSelectRecordsAsync(p =>
+                p.CreatorId == currentUser.Id
+            );
             return Ok(projects);
         }
 
@@ -51,9 +55,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
             {
                 return Unauthorized();
             }
-            List<Project> projects = await _projectRepo
-            .GetSelectRecordsAsync(p => p.OpusId == id &&
-            p.CreatorId == currentUser.Id);
+            List<Project> projects = await _projectRepo.GetSelectRecordsAsync(p =>
+                p.OpusId == id && p.CreatorId == currentUser.Id
+            );
             if (projects.Count == 0)
             {
                 return NotFound();
@@ -62,40 +66,26 @@ namespace ClassicsLanguageToolsAsp.Controllers
         }
 
         // GET: projects/5
-        [HttpGet("{opusId:int}")]
-        public async Task<IActionResult> GetProject(int opusId)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetProject(int id)
         {
-            Opus? opus = await _opusRepo
-                .GetRecordByIdAsync(opusId, qu => qu.Include(w => w.Author).Include(w => w.Lines));
-            Console.WriteLine($"Opus Located: {opus != null}");
-            if (opus == null)
+            Project? project = await _projectRepo.GetRecordByIdAsync(
+                id,
+                qu =>
+                    qu.Include(p => p.Opus)
+                            .ThenInclude(w => w.Author)
+                        .Include(p => p.Opus)
+                            .ThenInclude(w => w.Lines)
+                                .ThenInclude(l => l.VocabReferences)
+                        .Include(p => p.Opus)
+                            .ThenInclude(w => w.Lines)
+                                .ThenInclude(l => l.Comments)
+            );
+
+            if (project == null)
             {
                 return NotFound();
             }
-            List<VocabInstance> vocabReferences = await _instanceRepo.GetSelectRecordsAsync(vr => vr.Line.OpusId == opusId, qu => qu.Include(vr => vr.Vocab));
-
-            List<Line> lines = opus.Lines.ToList();
-            List<string> sections = lines.DistinctBy(li => li.Locus).Select(li => li.Locus).ToList();
-            Dictionary<string, Dictionary<int, string>> linesByCategory = [];
-            foreach (string sec in sections)
-            {
-                Dictionary<int, string> linesText = new Dictionary<int, string>();
-                List<Line> group = lines.Where(li => li.Locus == sec).OrderBy(li => li.Number).ToList();
-                foreach (Line line in group)
-                {
-                    linesText.Add(line.Number, line.Text);
-                }
-                linesByCategory.Add(sec, linesText);
-            }
-
-            ProjectVM project = new ProjectVM
-            {
-                Code = opus.Code,
-                Title = opus.Title,
-                AuthorName = opus.Author != null ? opus.Author.Name : "Anonymous",
-                Lines = linesByCategory,
-                Vocab = vocabReferences
-            };
 
             return Ok(project);
         }
@@ -124,11 +114,15 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
         // PATCH: projects/{id}
         [HttpPatch("{id:int}")]
-        public async Task<IActionResult> EditProject([FromRoute] int id, [FromBody] JsonPatchDocument<Project> projectData)
+        public async Task<IActionResult> EditProject(
+            [FromRoute] int id,
+            [FromBody] JsonPatchDocument<Project> projectData
+        )
         {
-            Project? projectToUpdate = await _projectRepo
-                .GetRecordByIdAsync(id, qu => qu
-                    .Include(p => p.Creator));
+            Project? projectToUpdate = await _projectRepo.GetRecordByIdAsync(
+                id,
+                qu => qu.Include(p => p.Creator)
+            );
             if (projectToUpdate == null)
             {
                 return NotFound();

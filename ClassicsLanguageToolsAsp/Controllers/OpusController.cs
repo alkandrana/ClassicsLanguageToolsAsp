@@ -1,8 +1,9 @@
+using ClassicsLanguageToolsAsp.Data;
+using ClassicsLanguageToolsAsp.Models;
+using ClassicsLanguageToolsAsp.Models.ViewModels;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ClassicsLanguageToolsAsp.Models;
-using Microsoft.AspNetCore.JsonPatch;
-using ClassicsLanguageToolsAsp.Data;
 
 namespace ClassicsLanguageToolsAsp.Controllers
 {
@@ -21,7 +22,9 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOpera()
         {
-            List<Opus> opera = await _opusRepo.GetAllRecordsAsync(qu => qu.Include(w => w.Author).Include(w => w.Language));
+            List<Opus> opera = await _opusRepo.GetAllRecordsAsync(qu =>
+                qu.Include(w => w.Author).Include(w => w.Language)
+            );
             return Ok(opera);
         }
 
@@ -42,17 +45,59 @@ namespace ClassicsLanguageToolsAsp.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetOpus(int id)
         {
-            Opus? opus = await _opusRepo
-                .GetRecordByIdAsync(id, qu => qu
-                    .Include(w => w.Author)
-                    .Include(w => w.Language)
-                    .Include(w => w.Lines));
+            Opus? opus = await _opusRepo.GetRecordByIdAsync(
+                id,
+                qu => qu.Include(w => w.Author).Include(w => w.Language).Include(w => w.Lines)
+            );
             if (opus == null)
             {
                 return NotFound();
             }
 
             return Ok(opus);
+        }
+
+        public async Task<IActionResult> ReadOpus(int id)
+        {
+            Opus? opus = await _opusRepo.GetRecordByIdAsync(
+                id,
+                qu => qu.Include(w => w.Author).Include(w => w.Lines)
+            );
+            if (opus == null)
+            {
+                return NotFound();
+            }
+
+            List<Line> lines = opus.Lines.ToList();
+            List<string> sections = lines
+                .DistinctBy(li => li.Locus)
+                .Select(li => li.Locus)
+                .ToList();
+            Dictionary<string, Dictionary<int, string>> linesByCategory = [];
+            foreach (string sec in sections)
+            {
+                Dictionary<int, string> linesText = new Dictionary<int, string>();
+                List<Line> group = lines
+                    .Where(li => li.Locus == sec)
+                    .OrderBy(li => li.Number)
+                    .ToList();
+                foreach (Line line in group)
+                {
+                    linesText.Add(line.Number, line.Text);
+                }
+                linesByCategory.Add(sec, linesText);
+            }
+
+            ProjectVM project = new ProjectVM
+            {
+                Id = opus.Id,
+                Code = opus.Code,
+                Title = opus.Title,
+                AuthorName = opus.Author != null ? opus.Author.Name : "Anonymous",
+                Lines = linesByCategory,
+            };
+
+            return Ok(project);
         }
 
         // POST: opera
@@ -71,10 +116,12 @@ namespace ClassicsLanguageToolsAsp.Controllers
 
         // PATCH: opera/{id}
         [HttpPatch("{id:int}")]
-        public async Task<IActionResult> EditOpus([FromRoute] int id, [FromBody] JsonPatchDocument<Opus> opusData)
+        public async Task<IActionResult> EditOpus(
+            [FromRoute] int id,
+            [FromBody] JsonPatchDocument<Opus> opusData
+        )
         {
-            Opus? opusToUpdate = await _opusRepo
-                .GetRecordByIdAsync(id);
+            Opus? opusToUpdate = await _opusRepo.GetRecordByIdAsync(id);
             if (opusToUpdate == null)
             {
                 return NotFound();
