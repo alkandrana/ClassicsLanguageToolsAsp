@@ -57,6 +57,8 @@ namespace ClassicsLanguageToolsAsp.Controllers
             return Ok(opus);
         }
 
+        [HttpGet]
+        [Route("/opera/read/{id}")]
         public async Task<IActionResult> ReadOpus(int id)
         {
             Opus? opus = await _opusRepo.GetRecordByIdAsync(
@@ -91,7 +93,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             ProjectVM project = new ProjectVM
             {
                 Id = opus.Id,
-                Code = opus.Code,
+                Code = opus.Author != null ? $"{opus.Author.Code}. {opus.Code}." : opus.Code,
                 Title = opus.Title,
                 AuthorName = opus.Author != null ? opus.Author.Name : "Anonymous",
                 Lines = linesByCategory,

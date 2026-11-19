@@ -14,9 +14,9 @@ public class Program
 
         // Register your SQLite database connection service
         var connectionString = builder.Configuration
-            .GetConnectionString("SqliteConnection");
+            .GetConnectionString("PostgresConnection");
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite(connectionString));
+            options.UseNpgsql(connectionString));
 
         builder.Services.AddAuthorization();
         builder.Services.AddIdentityApiEndpoints<ClassUser>()
