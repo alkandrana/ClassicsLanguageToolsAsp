@@ -102,7 +102,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
             }
 
             project.Creator = currentUser;
-            project.StartDate = DateTime.Now;
+            project.StartDate = DateTime.UtcNow;
             int rowsAffected = await _projectRepo.CreateRecordAsync(project);
             if (rowsAffected == 0)
             {

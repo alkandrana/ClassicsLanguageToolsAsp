@@ -9,7 +9,7 @@ public class Project
     public string? Description { get; set; }
     public int OpusId { get; set; }
     public Opus? Opus { get; set; }
-    public int LastLineId { get; set; }
+    public int? LastLineId { get; set; }
     public Line? LastLine { get; set; }
     public DateTime StartDate { get; set; }
     public DateOnly? Deadline { get; set; }

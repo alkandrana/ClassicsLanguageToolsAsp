@@ -270,7 +270,7 @@ namespace ClassicsLanguageToolsAsp.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("LastLineId")
+                    b.Property<int?>("LastLineId")
                         .HasColumnType("integer");
 
                     b.Property<int>("OpusId")
@@ -561,9 +561,7 @@ namespace ClassicsLanguageToolsAsp.Migrations
 
                     b.HasOne("ClassicsLanguageToolsAsp.Models.Line", "LastLine")
                         .WithMany()
-                        .HasForeignKey("LastLineId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LastLineId");
 
                     b.HasOne("ClassicsLanguageToolsAsp.Models.Opus", "Opus")
                         .WithMany()
