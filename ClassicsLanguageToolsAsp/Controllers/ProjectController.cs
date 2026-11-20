@@ -77,6 +77,7 @@ namespace ClassicsLanguageToolsAsp.Controllers
                         .Include(p => p.Opus)
                             .ThenInclude(w => w.Lines)
                                 .ThenInclude(l => l.VocabReferences)
+                                    .ThenInclude(vr => vr.Vocab)
                         .Include(p => p.Opus)
                             .ThenInclude(w => w.Lines)
                                 .ThenInclude(l => l.Comments)
